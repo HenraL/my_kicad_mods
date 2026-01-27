@@ -25,20 +25,27 @@ done
 echo ""  # New line after progress
 echo "Copied $num_mod footprint files."
 
-echo "Copying 3D model files to build/3dmodels/..."
-# Find and count 3D model files
-mapfile -t model_files < <(find src -type f \( -name "*.wrl" -o -name "*.step" -o -name "*.stp" \))
-num_models=${#model_files[@]}
-echo "Found $num_models 3D model files to copy."
+echo "Copying 3D model directories to build/3dmodels/..."
+# Find and count 3D model directories
+mapfile -t model_dirs < <(find src -type f \( -name "*.wrl" -o -name "*.step" -o -name "*.stp" \) -exec dirname {} \; | sort | uniq)
+num_models=${#model_dirs[@]}
+echo "Found $num_models 3D model directories to copy."
 counter=1
-for file in "${model_files[@]}"; do
-  FILE_NAME=$(basename "$file" | tr -d '\n')
-  printf '\r\033[KCopying 3D model %d of %d: %s' "$counter" "$num_models" "$FILE_NAME"
-  cp "$file" build/3dmodels/
+for dir in "${model_dirs[@]}"; do
+  DIR_NAME=$(basename "$dir" | tr -d '\n')
+  printf '\r\033[KCopying 3D model directory %d of %d: %s' "$counter" "$num_models" "$DIR_NAME"
+  rel_path="${dir#src/}"
+  if [[ "$(dirname "$rel_path")" == "." ]]; then
+    dest_parent="build/3dmodels"
+  else
+    dest_parent="build/3dmodels/$(dirname "$rel_path")"
+  fi
+  mkdir -p "$dest_parent"
+  cp -r "$dir" "$dest_parent/"
   ((counter++))
 done
 echo ""  # New line after progress
-echo "Copied $num_models 3D model files."
+echo "Copied $num_models 3D model directories."
 
 echo "Copying symbol files (.kicad_sym) to build/symbols/..."
 # Find and count symbol files
