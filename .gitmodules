@@ -58,3 +58,6 @@
 [submodule "src/snap_magic"]
 	path = src/snap_magic
 	url = https://github.com/HenraL/snap_magic.git
+[submodule "src/hm10-kicad"]
+	path = src/hm10-kicad
+	url = https://github.com/dylankbuckley/hm10-kicad.git
