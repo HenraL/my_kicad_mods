@@ -28,6 +28,11 @@ C_RESET="\033[0m${C_BACKGROUND}"
 C_YELLOW="\033[38;5;226m${C_BACKGROUND}"
 
 #####################################
+# Troublemakers (for IP reasons)
+#####################################
+EXCLUDE_PATHS=("ultra_librarian")
+
+#####################################
 # Functions
 #####################################
 
@@ -99,6 +104,63 @@ function copy_3dshape_dirs {
   echo -e "${C_GREEN}$copied of $total 3D models copied${C_RESET}"
 }
 
+# Functions for handling troublemakers
+
+function compile_troublemakers {
+  local PRUNE_EXPR=""
+  for excl in "${EXCLUDE_PATHS[@]}"; do
+    PRUNE_EXPR="$PRUNE_EXPR -path */$excl/* -prune -o"
+  done
+  echo "$PRUNE_EXPR"
+}
+
+function handle_troublemakers {
+  local type="$1"       # "footprint" / "symbol" / "3D"
+  local src_dir="$2"    # src root
+  local out_dir="$3"    # build root for this type
+  shift 3
+  local providers=("$@") # EXCLUDE_PATHS
+
+  for provider in "${providers[@]}"; do
+    echo -e "${C_YELLOW}Processing $type from provider: $provider${C_RESET}"
+
+    case "$type" in
+      "footprint")
+        # Collect .kicad_mod files under provider
+        mapfile -t files < <(find "$src_dir" -path "*/$provider/*" -name "*.kicad_mod" | sort)
+        if (( ${#files[@]} > 0 )); then
+          dest="$out_dir/${provider}.pretty"
+          mkdir -p "$dest"
+          copy_files_flat "Footprint" "$dest" "${files[@]}"
+        fi
+        ;;
+
+      "symbol")
+        # Collect .kicad_sym files under provider
+        mapfile -t files < <(find "$src_dir" -path "*/$provider/*" -name "*.kicad_sym" | sort)
+        if (( ${#files[@]} > 0 )); then
+          dest="$out_dir/${provider}.kicad_sym"
+          copy_files_merge_symbols "$dest" "${files[@]}"
+        fi
+        ;;
+
+      "3D")
+        # Collect .3dshapes folders under provider
+        mapfile -t dirs < <(find "$src_dir" -path "*/$provider/*" -type d -name "*.3dshapes" | sort)
+        if (( ${#dirs[@]} > 0 )); then
+          dest="$out_dir/$provider"
+          mkdir -p "$dest"
+          copy_3dshape_dirs "$dest" "${dirs[@]}"
+        fi
+        ;;
+
+      *)
+        echo -e "${C_RED}Unknown type: $type${C_RESET}"
+        ;;
+    esac
+  done
+}
+
 
 #####################################
 # Boot up
@@ -118,6 +180,8 @@ echo ""
 echo "DO NOT modify KICAD*_3DMODEL_DIR variables."
 echo ""
 
+PRUNE_DIRS=$(compile_troublemakers)
+
 #######################################
 # Clean + setup
 #######################################
@@ -132,7 +196,7 @@ mkdir -p "$FP_DIR" "$SYM_DIR" "$MODEL_DIR"
 #######################################
 echo ""
 echo -e "${C_CYAN}Collecting footprint files (.kicad_mod)...${C_RESET}"
-mapfile -t footprint_files < <(find "$SRC_DIR" -name "*.kicad_mod" | sort)
+mapfile -t footprint_files < <(find "$SRC_DIR" -name "*.kicad_mod" $PRUNE_DIRS | sort)
 num_fp=${#footprint_files[@]}
 echo -e "${C_GREEN}Found $num_fp footprints.${C_RESET}"
 
@@ -144,7 +208,7 @@ echo -e "\n${C_GREEN}Footprints done.${C_RESET}"
 #######################################
 echo ""
 echo -e "${C_CYAN}Collecting symbol files (.kicad_sym)...${C_RESET}"
-mapfile -t symbol_files < <(find "$SRC_DIR" -name "*.kicad_sym" | sort)
+mapfile -t symbol_files < <(find "$SRC_DIR" -name "*.kicad_sym" $PRUNE_DIRS | sort)
 num_sym=${#symbol_files[@]}
 echo -e "${C_GREEN}Found $num_sym symbol files.${C_RESET}"
 
@@ -160,7 +224,7 @@ fi
 echo ""
 echo -e "${C_CYAN}Collecting 3D models (.3dshapes)...${C_RESET}"
 mapfile -t model_dirs < <(
-  find "$SRC_DIR" -type d -name "*.3dshapes" | sort
+  find "$SRC_DIR" -type d -name "*.3dshapes" $PRUNE_DIRS | sort
 )
 num_models=${#model_dirs[@]}
 echo -e "${C_GREEN}Found $num_models model files.${C_RESET}"
@@ -168,6 +232,16 @@ echo -e "${C_GREEN}Found $num_models model files.${C_RESET}"
 copy_3dshape_dirs "$MODEL_DIR" "${model_dirs[@]}"
 
 echo -e "\n${C_GREEN}3D models done.${C_RESET}"
+
+#####################################
+# Handle "troublemaker" libraries
+#####################################
+
+echo -e "${C_RED}Processing troublemaker libraries${C_RESET}"
+handle_troublemakers "footprint" "$SRC_DIR" "$BUILD_DIR/footprints" "${EXCLUDE_PATHS[@]}"
+handle_troublemakers "symbol"    "$SRC_DIR" "$BUILD_DIR/symbols"    "${EXCLUDE_PATHS[@]}"
+handle_troublemakers "3D"        "$SRC_DIR" "$BUILD_DIR/3dmodels"   "${EXCLUDE_PATHS[@]}"
+echo -e "${C_GREEN}Troublemakers processed${C_RESET}"
 
 #######################################
 # Final instructions (VERY explicit)
