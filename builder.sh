@@ -15,11 +15,15 @@ mapfile -t footprint_files < <(find src -name "*.kicad_mod")
 num_mod=${#footprint_files[@]}
 echo "Found $num_mod footprint files to copy."
 counter=1
+FILE_NAME=""
 for file in "${footprint_files[@]}"; do
-  echo "Copying footprint $counter of $num_mod: $(basename "$file")"
+  FILE_NAME=$(basename "$file" | tr -d '\n')
+  printf '\r\033[KCopying footprint %d of %d: %s' "$counter" "$num_mod" "$FILE_NAME"
   cp "$file" build/footprints/Misc.pretty/
   ((counter++))
 done
+echo ""  # New line after progress
+echo "Copied $num_mod footprint files."
 
 echo "Merging symbol libraries (.kicad_sym) into build/symbols.kicad_sym..."
 # Find and count symbol files
