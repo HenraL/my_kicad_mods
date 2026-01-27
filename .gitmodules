@@ -55,3 +55,6 @@
 [submodule "src/Alternate-KiCad-Library"]
 	path = src/Alternate-KiCad-Library
 	url = https://github.com/DawidCislo/Alternate-KiCad-Library.git
+[submodule "src/snap_magic"]
+	path = src/snap_magic
+	url = https://github.com/HenraL/snap_magic.git
