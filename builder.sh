@@ -106,12 +106,13 @@ function copy_3dshape_dirs {
 
 # Functions for handling troublemakers
 
-function compile_troublemakers {
-  local PRUNE_EXPR=""
-  for excl in "${EXCLUDE_PATHS[@]}"; do
-    PRUNE_EXPR="$PRUNE_EXPR -path */$excl/* -prune -o"
+function compile_troublemakers() {
+  local result=()
+  for excl in "$@"; do
+    result+=( -path "*/$excl/*" -prune -o )
   done
-  echo "$PRUNE_EXPR"
+  # Return the array by printing, but capture with array assignment
+  printf "%s\n" "${result[@]}"
 }
 
 function handle_troublemakers {
@@ -180,7 +181,7 @@ echo ""
 echo "DO NOT modify KICAD*_3DMODEL_DIR variables."
 echo ""
 
-PRUNE_DIRS=$(compile_troublemakers)
+mapfile -t PRUNE_DIRS < <(compile_troublemakers "${EXCLUDE_PATHS[@]}")
 
 #######################################
 # Clean + setup
@@ -196,7 +197,7 @@ mkdir -p "$FP_DIR" "$SYM_DIR" "$MODEL_DIR"
 #######################################
 echo ""
 echo -e "${C_CYAN}Collecting footprint files (.kicad_mod)...${C_RESET}"
-mapfile -t footprint_files < <(find "$SRC_DIR" -name "*.kicad_mod" $PRUNE_DIRS | sort)
+mapfile -t footprint_files < <(find "$SRC_DIR" "${PRUNE_DIRS[@]}" -name "*.kicad_mod" | sort)
 num_fp=${#footprint_files[@]}
 echo -e "${C_GREEN}Found $num_fp footprints.${C_RESET}"
 
@@ -208,7 +209,7 @@ echo -e "\n${C_GREEN}Footprints done.${C_RESET}"
 #######################################
 echo ""
 echo -e "${C_CYAN}Collecting symbol files (.kicad_sym)...${C_RESET}"
-mapfile -t symbol_files < <(find "$SRC_DIR" -name "*.kicad_sym" $PRUNE_DIRS | sort)
+mapfile -t symbol_files < <(find "$SRC_DIR"  "${PRUNE_DIRS[@]}" -name "*.kicad_sym" | sort)
 num_sym=${#symbol_files[@]}
 echo -e "${C_GREEN}Found $num_sym symbol files.${C_RESET}"
 
@@ -224,7 +225,7 @@ fi
 echo ""
 echo -e "${C_CYAN}Collecting 3D models (.3dshapes)...${C_RESET}"
 mapfile -t model_dirs < <(
-  find "$SRC_DIR" -type d -name "*.3dshapes" $PRUNE_DIRS | sort
+  find "$SRC_DIR" "${PRUNE_DIRS[@]}" -type d -name "*.3dshapes" | sort
 )
 num_models=${#model_dirs[@]}
 echo -e "${C_GREEN}Found $num_models model files.${C_RESET}"
