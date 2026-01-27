@@ -49,3 +49,6 @@
 [submodule "ultra_librarian"]
 	path = src/ultra_librarian
 	url = https://github.com/HenraL/ultra_librarian.git
+[submodule "src/freetronics_kicad_library"]
+	path = src/freetronics_kicad_library
+	url = https://github.com/freetronics/freetronics_kicad_library.git
