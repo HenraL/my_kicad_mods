@@ -2,6 +2,7 @@
 # Original script written partially by hand
 # Script writing was aided by AI.
 # set -euo pipefail
+set -uo pipefail
 
 SRC_DIR="src"
 BUILD_DIR="build"
@@ -42,7 +43,7 @@ function copy_files_flat {
 
   for f in "${files[@]}"; do
     base=$(basename "$f")
-    printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "$name" "$base" "$C_RESET"
+    printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "$name" "${base//%/%%}" "$C_RESET"
     if [[ -e "$dest/$base" ]]; then
       warning="$warning\nWARNING: duplicate $name skipped: $base"
     else
@@ -73,8 +74,8 @@ function copy_files_merge_symbols {
 }
 
 function copy_3dshape_dirs {
-  local dest="$2"
-  shift 2
+  local dest="$1"
+  shift
   local dirs=("$@")
   local total=${#dirs[@]}
   local counter=1
@@ -84,7 +85,7 @@ function copy_3dshape_dirs {
 
   for d in "${dirs[@]}"; do
     name="$(basename "$d")"
-    printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "3D model" "$name" "$C_RESET"
+    printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "3D model" "${name//%/%%}" "$C_RESET"
     if [[ -e "$dest/$name" ]]
     then
       warning="$warning\nWARNING: Duplicate 3D model skipped: $name"
