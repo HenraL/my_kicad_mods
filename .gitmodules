@@ -1,0 +1,51 @@
+[submodule "Connectors_IEC_DIN.pretty"]
+	path = Connectors_IEC_DIN.pretty
+	url = https://github.com/KiCad/Connectors_IEC_DIN.pretty
+[submodule "Measurement_Scales.pretty"]
+	path = Measurement_Scales.pretty
+	url = https://github.com/KiCad/Measurement_Scales.pretty
+[submodule "Microwave.pretty"]
+	path = Microwave.pretty
+	url = https://github.com/KiCad/Microwave.pretty
+[submodule "Power_Integrations.pretty"]
+	path = Power_Integrations.pretty
+	url = https://github.com/KiCad/Power_Integrations.pretty
+[submodule "Resistors_Universal.pretty"]
+	path = Resistors_Universal.pretty
+	url = https://github.com/KiCad/Resistors_Universal.pretty
+[submodule "kicad-footprint-generator"]
+	path = kicad-footprint-generator
+	url = https://gitlab.com/kicad/libraries/kicad-footprint-generator
+[submodule "kicad-footprints"]
+	path = kicad-footprints
+	url = https://gitlab.com/kicad/libraries/kicad-footprints.git
+[submodule "kicad-library-utils"]
+	path = kicad-library-utils
+	url = https://gitlab.com/kicad/libraries/kicad-library-utils.git
+[submodule "kicad-packages3D"]
+	path = kicad-packages3D
+	url = https://gitlab.com/kicad/libraries/kicad-packages3D.git
+[submodule "kicad-symbols"]
+	path = kicad-symbols
+	url = https://gitlab.com/kicad/libraries/kicad-symbols.git
+[submodule "Pin_Headers.pretty"]
+	path = Pin_Headers.pretty
+	url = https://github.com/KiCad/Pin_Headers.pretty.git
+[submodule "LEDs.pretty"]
+	path = LEDs.pretty
+	url = https://github.com/KiCad/LEDs.pretty.git
+[submodule "Oscillators.pretty"]
+	path = Oscillators.pretty
+	url = https://github.com/KiCad/Oscillators.pretty.git
+[submodule "Connectors_Tab.pretty"]
+	path = Connectors_Tab.pretty
+	url = https://github.com/KiCad/Connectors_Tab.pretty.git
+[submodule "SparkFun-KiCad-Libraries"]
+	path = SparkFun-KiCad-Libraries
+	url = https://github.com/sparkfun/SparkFun-KiCad-Libraries.git
+[submodule "KiCAD-Libraries"]
+	path = KiCAD-Libraries
+	url = https://github.com/sww1235/KiCAD-Libraries.git
+[submodule "kicad-ESP8266"]
+	path = kicad-ESP8266
+	url = https://github.com/Basirk/kicad-ESP8266.git
