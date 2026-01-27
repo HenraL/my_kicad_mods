@@ -72,25 +72,30 @@ function copy_files_merge_symbols {
   echo ")" >> "$dest"
 }
 
-function copy_files_preserve_dirs {
-  local name="$1"
+function copy_3dshape_dirs {
   local dest="$2"
   shift 2
-  local files=("$@")
-  local total=${#files[@]}
+  local dirs=("$@")
+  local total=${#dirs[@]}
   local counter=1
   local copied=0
+  local warning="${C_YELLOW}"
+  local name=""
 
-  for f in "${files[@]}"; do
-    rel="${f#$SRC_DIR/}"
-    printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "$name" "$(basename "$f")" "$C_RESET"
-    mkdir -p "$dest/$(dirname "$rel")"
-    cp "$f" "$dest/$rel"
-    ((copied++))
+  for d in "${dirs[@]}"; do
+    name="$(basename "$d")"
+    printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "3D model" "$name" "$C_RESET"
+    if [[ -e "$dest/$name" ]]
+    then
+      warning="$warning\nWARNING: Duplicate 3D model skipped: $name"
+    else
+      cp -r "$d" "$dest"
+      ((copied++))
+    fi
     ((counter++))
   done
-  echo "" # final newline
-  echo -e "${C_GREEN}$copied of $total $name files copied${C_RESET}"
+  echo -e "$warning${C_RESET}"
+  echo -e "${C_GREEN}$copied of $total 3D models copied${C_RESET}"
 }
 
 
@@ -152,14 +157,14 @@ fi
 # 3D models
 #######################################
 echo ""
-echo -e "${C_CYAN}Collecting 3D models (.wrl / .step / .stp)...${C_RESET}"
-mapfile -t model_files < <(
-  find "$SRC_DIR" -type f \( -iname "*.wrl" -o -iname "*.step" -o -iname "*.stp" \) | sort
+echo -e "${C_CYAN}Collecting 3D models (.3dshapes)...${C_RESET}"
+mapfile -t model_dirs < <(
+  find "$SRC_DIR" -type d -name "*.3dshapes" | sort
 )
-num_models=${#model_files[@]}
+num_models=${#model_dirs[@]}
 echo -e "${C_GREEN}Found $num_models model files.${C_RESET}"
 
-copy_files_preserve_dirs "3D model" "$MODEL_DIR" "${model_files[@]}"
+copy_3dshape_dirs "$MODEL_DIR" "${model_dirs[@]}"
 
 echo -e "\n${C_GREEN}3D models done.${C_RESET}"
 
