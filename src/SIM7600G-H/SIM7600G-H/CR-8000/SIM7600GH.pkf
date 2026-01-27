@@ -1,0 +1,10 @@
+(unit MM)
+
+(package "SIM7600GH"
+    (type UNDEF)
+    (uver 2)
+    (mountForm default
+        (footprintRef "SIM7600GH")
+        (spec "default")
+    )
+)

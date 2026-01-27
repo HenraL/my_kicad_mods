@@ -1,0 +1,11 @@
+FILE_TYPE = MULTI_PHYS_TABLE;
+
+PART 'SIM7600G_H'
+CLASS = IC
+{========================================================================================}
+:"MANUFACTURER_NAME", "MANUFACTURER_PART_NUMBER"= "PART_NUMBER", "JEDEC_TYPE", "PACK_TYPE", "MOUSER_PART_NUMBER", "MOUSER_PRICE/STOCK", "ARROW_PART_NUMBER", "ARROW_PRICE/STOCK", "DESCRIPTION", "DATASHEET", "HEIGHT";
+{========================================================================================}
+ "SIMCOM", "SIM7600G-H" (!) = "", "SIM7600GH", "Other", "", "", "", "", "LTE-FDD/LTE TDD/HSPA+/UMTS/EDGE/GPRS/GSM module solution", "https://www.waveshare.com/w/upload/e/e6/SIM7600G_SIM7600G-H_Hardware_Design_V1.00.pdf", "3.1 mm"
+END_PART
+
+END.

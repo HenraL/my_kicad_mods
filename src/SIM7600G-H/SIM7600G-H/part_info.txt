@@ -1,0 +1,9 @@
+Manufacturer=SIMCOM
+PartNumber=SIM7600G-H
+PartCategory=Integrated Circuit
+PackageCategory=Other
+PinCount=135
+Version=2.5
+Released=2020-01-21 10:16:54
+Downloaded=2025-04-21 16:52:39
+3D=Y

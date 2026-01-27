@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP SIM7600G-H
+D LTE-FDD/LTE TDD/HSPA+/UMTS/EDGE/GPRS/GSM module solution
+K
+F https://www.waveshare.com/w/upload/e/e6/SIM7600G_SIM7600G-H_Hardware_Design_V1.00.pdf
+$ENDCMP
+#
+#End Doc Library
