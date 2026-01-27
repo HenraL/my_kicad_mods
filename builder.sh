@@ -25,20 +25,34 @@ done
 echo ""  # New line after progress
 echo "Copied $num_mod footprint files."
 
-echo "Merging symbol libraries (.kicad_sym) into build/symbols.kicad_sym..."
+echo "Copying 3D model files to build/3dmodels/..."
+# Find and count 3D model files
+mapfile -t model_files < <(find src -type f \( -name "*.wrl" -o -name "*.step" -o -name "*.stp" \))
+num_models=${#model_files[@]}
+echo "Found $num_models 3D model files to copy."
+counter=1
+for file in "${model_files[@]}"; do
+  FILE_NAME=$(basename "$file" | tr -d '\n')
+  printf '\r\033[KCopying 3D model %d of %d: %s' "$counter" "$num_models" "$FILE_NAME"
+  cp "$file" build/3dmodels/
+  ((counter++))
+done
+echo ""  # New line after progress
+echo "Copied $num_models 3D model files."
+
+echo "Copying symbol files (.kicad_sym) to build/symbols/..."
 # Find and count symbol files
 mapfile -t symbol_files < <(find src -name "*.kicad_sym")
 num_sym=${#symbol_files[@]}
-echo "Found $num_sym symbol files to merge."
-# Merge all .kicad_sym files into one
-output_sym="build/symbols.kicad_sym"
-echo "(kicad_symbol_lib" > "$output_sym"
-echo "	(version 20241209)" >> "$output_sym"
-echo "	(generator \"kicad_symbol_editor\")" >> "$output_sym"
-echo "	(generator_version \"9.0\")" >> "$output_sym"
-find src -name "*.kicad_sym" -exec sed '1,4d; $d; $d' {} \; >> "$output_sym"
-echo ")" >> "$output_sym"
-echo ")" >> "$output_sym"
-echo "Merged $num_sym symbol files."
+echo "Found $num_sym symbol files to copy."
+counter=1
+for file in "${symbol_files[@]}"; do
+  FILE_NAME=$(basename "$file" | tr -d '\n')
+  printf '\r\033[KCopying symbol %d of %d: %s' "$counter" "$num_sym" "$FILE_NAME"
+  cp "$file" build/symbols/
+  ((counter++))
+done
+echo ""  # New line after progress
+echo "Copied $num_sym symbol files."
 
 echo "Build process completed successfully."
