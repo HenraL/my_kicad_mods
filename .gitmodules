@@ -52,3 +52,6 @@
 [submodule "src/freetronics_kicad_library"]
 	path = src/freetronics_kicad_library
 	url = https://github.com/freetronics/freetronics_kicad_library.git
+[submodule "src/Alternate-KiCad-Library"]
+	path = src/Alternate-KiCad-Library
+	url = https://github.com/DawidCislo/Alternate-KiCad-Library.git
