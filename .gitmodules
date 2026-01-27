@@ -46,3 +46,6 @@
 [submodule "kicad-ESP8266"]
 	path = src/kicad-ESP8266
 	url = https://github.com/Basirk/kicad-ESP8266.git
+[submodule "ultra_librarian"]
+	path = src/ultra_librarian
+	url = https://github.com/HenraL/ultra_librarian.git
