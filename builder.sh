@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Original script written partially by hand
 # Script writing was aided by AI.
-set -euo pipefail
+# set -euo pipefail
 
 SRC_DIR="src"
 BUILD_DIR="build"
@@ -38,12 +38,13 @@ function copy_files_flat {
   local total=${#files[@]}
   local counter=1
   local copied=0
+  local warning="${C_YELLOW}"
 
   for f in "${files[@]}"; do
     base=$(basename "$f")
-    printf '\r\033[K[%d/%d] %s: %s' "$counter" "$total" "$name" "$base"
+    printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "$name" "$base" "$C_RESET"
     if [[ -e "$dest/$base" ]]; then
-      echo -e "\nWARNING: duplicate $name skipped: $base"
+      warning="$warning\nWARNING: duplicate $name skipped: $base"
     else
       cp "$f" "$dest"
       ((copied++))
@@ -51,7 +52,8 @@ function copy_files_flat {
     ((counter++))
   done
   echo "" # final newline
-  echo "$copied of $total $name files copied"
+  echo -e "$warning${C_RESET}"
+  echo -e "${C_GREEN}$copied of $total $name files copied${C_RESET}"
 }
 
 function copy_files_merge_symbols {
@@ -81,14 +83,14 @@ function copy_files_preserve_dirs {
 
   for f in "${files[@]}"; do
     rel="${f#$SRC_DIR/}"
-    printf '\r\033[K[%d/%d] %s: %s' "$counter" "$total" "$name" "$(basename "$f")"
+    printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "$name" "$(basename "$f")" "$C_RESET"
     mkdir -p "$dest/$(dirname "$rel")"
     cp "$f" "$dest/$rel"
     ((copied++))
     ((counter++))
   done
   echo "" # final newline
-  echo "$copied of $total $name files copied"
+  echo -e "${C_GREEN}$copied of $total $name files copied${C_RESET}"
 }
 
 
@@ -113,58 +115,58 @@ echo ""
 #######################################
 # Clean + setup
 #######################################
-echo "Cleaning previous build..."
+echo -e "${C_PINK}Cleaning previous build...${C_RESET}"
 rm -rf "$BUILD_DIR"
 
-echo "Creating build directories..."
+echo -e "${C_PINK}Creating build directories...${C_RESET}"
 mkdir -p "$FP_DIR" "$SYM_DIR" "$MODEL_DIR"
 
 #######################################
 # Footprints
 #######################################
 echo ""
-echo "Collecting footprint files (.kicad_mod)..."
+echo -e "${C_CYAN}Collecting footprint files (.kicad_mod)...${C_RESET}"
 mapfile -t footprint_files < <(find "$SRC_DIR" -name "*.kicad_mod" | sort)
 num_fp=${#footprint_files[@]}
-echo "Found $num_fp footprints."
+echo -e "${C_GREEN}Found $num_fp footprints.${C_RESET}"
 
 copy_files_flat "Footprint" "$FP_DIR" "${footprint_files[@]}"
-echo -e "\nFootprints done."
+echo -e "\n${C_GREEN}Footprints done.${C_RESET}"
 
 #######################################
 # Symbols (merged)
 #######################################
 echo ""
-echo "Collecting symbol files (.kicad_sym)..."
+echo -e "${C_CYAN}Collecting symbol files (.kicad_sym)...${C_RESET}"
 mapfile -t symbol_files < <(find "$SRC_DIR" -name "*.kicad_sym" | sort)
 num_sym=${#symbol_files[@]}
-echo "Found $num_sym symbol files."
+echo -e "${C_GREEN}Found $num_sym symbol files.${C_RESET}"
 
 if (( num_sym > 0 )); then
   copy_files_merge_symbols "$SYM_OUT" "${symbol_files[@]}"
 else
-  echo "No symbols found."
+  echo -e "${C_RED}No symbols found.${C_RESET}"
 fi
 
 #######################################
 # 3D models
 #######################################
 echo ""
-echo "Collecting 3D models (.wrl / .step / .stp)..."
+echo -e "${C_CYAN}Collecting 3D models (.wrl / .step / .stp)...${C_RESET}"
 mapfile -t model_files < <(
   find "$SRC_DIR" -type f \( -iname "*.wrl" -o -iname "*.step" -o -iname "*.stp" \) | sort
 )
 num_models=${#model_files[@]}
-echo "Found $num_models model files."
+echo -e "${C_GREEN}Found $num_models model files.${C_RESET}"
 
 copy_files_preserve_dirs "3D model" "$MODEL_DIR" "${model_files[@]}"
 
-echo -e "\n3D models done."
+echo -e "\n${C_GREEN}3D models done.${C_RESET}"
 
 #######################################
 # Final instructions (VERY explicit)
 #######################################
-echo ""
+echo -e "${C_GREEN}"
 echo "=============================================="
 echo " BUILD COMPLETE"
 echo "=============================================="
@@ -175,7 +177,7 @@ echo "  Footprints : $FP_DIR"
 echo "  Symbols    : $SYM_OUT"
 echo "  3D models  : set path to $MODEL_DIR"
 echo ""
-echo "NOW DO THIS IN KiCad (ONCE):"
+echo -e "${C_YELLOW}NOW DO THIS IN KiCad (ONCE):"
 echo ""
 echo "1) Footprints:"
 echo "   Preferences → Manage Footprint Libraries"
@@ -195,10 +197,10 @@ echo ""
 echo "     Name : $MODEL_VAR"
 echo "     Path : $(cd "$MODEL_DIR" && pwd)"
 echo ""
-echo "   DO NOT modify KICAD*_3DMODEL_DIR"
-echo ""
+echo -e "${C_RED}   DO NOT modify KICAD*_3DMODEL_DIR${C_RESET}"
+echo -e "${C_CYAN}"
 echo "Once this is done, KiCad will automatically find"
 echo "all 3D models produced by this script."
 echo ""
-echo "=============================================="
+echo -e "==============================================${C_RESET}"
 echo "(c) Written by Henry Letellier, aided by AI"
