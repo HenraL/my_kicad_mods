@@ -13,57 +13,84 @@ MODEL_DIR="$BUILD_DIR/3dmodels"
 MODEL_VAR="MY_3DMODELS"
 
 #####################################
+# Colours
+#####################################
+
+C_BACKGROUND="\033[48;5;16m"
+C_RED="\033[38;5;9m${C_BACKGROUND}"
+C_PINK="\033[38;5;206m${C_BACKGROUND}"
+C_CYAN="\033[38;5;87m${C_BACKGROUND}"
+C_BLUE="\033[38;5;45m${C_BACKGROUND}"
+C_WHITE="\033[38;5;15m${C_BACKGROUND}"
+C_GREEN="\033[38;5;46m${C_BACKGROUND}"
+C_RESET="\033[0m${C_BACKGROUND}"
+C_YELLOW="\033[38;5;226m${C_BACKGROUND}"
+
+#####################################
 # Functions
 #####################################
 
-function copy_across {
-  local operation_name="$1"
-  local destination="$2"
+function copy_files_flat {
+  local name="$1"
+  local dest="$2"
   shift 2
-  local source="$@"
-  local total=${#source[@]}
+  local files=("$@")
+  local total=${#files[@]}
   local counter=1
   local copied=0
-  for file in "${source[@]}"
-  do
-    rel=$(basename "$file" | tr -d '\n')
-    printf '\r\033[K[%d/%d] %s: %s' "$counter" "$total" "$operation_name" "$rel"
-    if [[ -e "$dest/$file" ]]; then
-      echo -e "\nWARNING: duplicate $operation_name skipped: $file"
-      let "copied=$copied+1"
+
+  for f in "${files[@]}"; do
+    base=$(basename "$f")
+    printf '\r\033[K[%d/%d] %s: %s' "$counter" "$total" "$name" "$base"
+    if [[ -e "$dest/$base" ]]; then
+      echo -e "\nWARNING: duplicate $name skipped: $base"
     else
-      cp "$file" "$dest"
+      cp "$f" "$dest"
+      ((copied++))
     fi
-    let "counter=$counter+1"
+    ((counter++))
   done
-  echo "" # New line after all the files have been copied
-  echo "Copied $copied of $total file(s)"
+  echo "" # final newline
+  echo "$copied of $total $name files copied"
 }
 
-function copy_across_3D {
-  local operation_name="3D model"
-  local destination="$1"
-  shift 1
-  local source="$@"
-  local total=${#source[@]}
+function copy_files_merge_symbols {
+  local dest="$1"
+  shift
+  local files=("$@")
+  local total=${#files[@]}
+  echo "Merging $total symbol files into $dest"
+
+  # header from first file
+  awk 'NR==1,/^\)/' "${files[0]}" > "$dest"
+
+  for f in "${files[@]}"; do
+    awk '/^\(symbol /{in_symbol=1} in_symbol{print}' "$f" >> "$dest"
+  done
+  echo ")" >> "$dest"
+}
+
+function copy_files_preserve_dirs {
+  local name="$1"
+  local dest="$2"
+  shift 2
+  local files=("$@")
+  local total=${#files[@]}
   local counter=1
   local copied=0
-  for file in "${source[@]}"
-  do
-    rel=$(basename "$file" | tr -d '\n')
 
-    printf '\r\033[KCopying footprint %d of %d: %s' "$counter" "$total" "$rel"
-    if [[ -e "$dest/$file" ]]; then
-      echo -e "\nWARNING: duplicate $operation_name skipped: $file"
-      let "copied=$copied+1"
-    else
-      cp "$file" "$dest"
-    fi
-    let "counter=$counter+1"
+  for f in "${files[@]}"; do
+    rel="${f#$SRC_DIR/}"
+    printf '\r\033[K[%d/%d] %s: %s' "$counter" "$total" "$name" "$(basename "$f")"
+    mkdir -p "$dest/$(dirname "$rel")"
+    cp "$f" "$dest/$rel"
+    ((copied++))
+    ((counter++))
   done
-  echo "" # New line after all the files have been copied
-  echo "Copied $copied of $total file(s)"
+  echo "" # final newline
+  echo "$copied of $total $name files copied"
 }
+
 
 #####################################
 # Boot up
@@ -101,22 +128,7 @@ mapfile -t footprint_files < <(find "$SRC_DIR" -name "*.kicad_mod" | sort)
 num_fp=${#footprint_files[@]}
 echo "Found $num_fp footprints."
 
-# counter=1
-# for file in "${footprint_files[@]}"; do
-#   name=$(basename "$file")
-#   dest="$FP_DIR/$name"
-
-#   printf '\r\033[K[%d/%d] Footprint: %s' "$counter" "$num_fp" "$name"
-
-#   if [[ -e "$dest" ]]; then
-#     echo -e "\nWARNING: duplicate footprint skipped: $name"
-#   else
-#     cp "$file" "$dest"
-#   fi
-
-#   ((counter++))
-# done
-copy_across "footprint" "$FP_DIR" "${footprint_files[@]}"
+copy_files_flat "Footprint" "$FP_DIR" "${footprint_files[@]}"
 echo -e "\nFootprints done."
 
 #######################################
@@ -129,19 +141,7 @@ num_sym=${#symbol_files[@]}
 echo "Found $num_sym symbol files."
 
 if (( num_sym > 0 )); then
-  echo "Merging symbols into ONE library:"
-  echo "  $SYM_OUT"
-
-  awk 'NR==1,/^\)/' "${symbol_files[0]}" > "$SYM_OUT"
-
-  for file in "${symbol_files[@]}"; do
-    awk '
-      /^\(symbol / {in_symbol=1}
-      in_symbol {print}
-    ' "$file" >> "$SYM_OUT"
-  done
-
-  echo ")" >> "$SYM_OUT"
+  copy_files_merge_symbols "$SYM_OUT" "${symbol_files[@]}"
 else
   echo "No symbols found."
 fi
@@ -157,18 +157,8 @@ mapfile -t model_files < <(
 num_models=${#model_files[@]}
 echo "Found $num_models model files."
 
-counter=1
-for file in "${model_files[@]}"; do
-  rel="${file#$SRC_DIR/}"
-  dest="$MODEL_DIR/$rel"
+copy_files_preserve_dirs "3D model" "$MODEL_DIR" "${model_files[@]}"
 
-  printf '\r\033[K[%d/%d] 3D model: %s' "$counter" "$num_models" "$(basename "$file")"
-
-  mkdir -p "$(dirname "$dest")"
-  cp "$file" "$dest"
-
-  ((counter++))
-done
 echo -e "\n3D models done."
 
 #######################################
