@@ -37,9 +37,6 @@
 [submodule "Oscillators.pretty"]
 	path = Oscillators.pretty
 	url = https://github.com/KiCad/Oscillators.pretty.git
-[submodule "Connectors_Tab.pretty"]
-	path = Connectors_Tab.pretty
-	url = https://github.com/KiCad/Connectors_Tab.pretty.git
 [submodule "SparkFun-KiCad-Libraries"]
 	path = SparkFun-KiCad-Libraries
 	url = https://github.com/sparkfun/SparkFun-KiCad-Libraries.git
