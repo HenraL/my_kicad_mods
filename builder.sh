@@ -8,6 +8,7 @@ set -uo pipefail
 # Timer tracking - initialise
 #####################################
 RUN_START_TIME=$(date +%s)
+ELAPSED_TIME=0
 ELAPSED_HOURS=0
 ELAPSED_MINUTES=0
 ELAPSED_SECONDS=0
@@ -32,6 +33,11 @@ MODEL_VAR="MY_3DMODELS"
 EXCLUDE_PATHS=("ultra_librarian")
 
 ####################################
+# Refresh rate for output on screen
+####################################
+OUTPUT_REFRESH_RATE=10
+
+####################################
 # Some booleans
 ####################################
 TRUE=0
@@ -43,7 +49,7 @@ NO=$FALSE
 # In a Terminal ?
 #####################################
 
-if [[ $- == *i* ]];then
+if [[ -t 1 ]];then
   echo "We are in a terminal"
   IS_A_TTY=$TRUE
 else
@@ -81,18 +87,38 @@ fi
 # Functions
 #####################################
 
+# Fancy displaying and artificial output reduction (avoids slowing down the program via excessive outputs)
 function update_elapsed_time {
-  local i=${1:-0}
-  if (( i % 1000 == 0 )); then
+  local i=$1
+  if (( i % OUTPUT_REFRESH_RATE == 0 )); then
     NOW=$(date +%s)
-    ELAPSED=$((NOW - START_TIME))
+    ELAPSED_TIME=$((NOW - RUN_START_TIME))
     ELAPSED_HOURS=$((ELAPSED_TIME / 3600))
     ELAPSED_MINUTES=$(((ELAPSED_TIME % 3600) / 60))
     ELAPSED_SECONDS=$((ELAPSED_TIME % 60))
-    PRETTY_LOG_ELAPSED="[${ELAPSED_HOURS}:${ELAPSED_MINUTES}:${ELAPSED_SECONDS}]"
+    PRETTY_LOG_ELAPSED=$(printf "[%02d:%02d:%02d]" "$ELAPSED_HOURS" "$ELAPSED_MINUTES" "$ELAPSED_SECONDS")
+  fi
+}
+update_elapsed_time 0
+
+function file_update {
+  local function_name="$1"
+  local counter="$2"
+  local total="$3"
+  local name="$4"
+  local base="$5"
+  local file_path="$6"
+  local file_destination="$7"
+  if [[ "$IS_A_TTY" == "$FALSE" ]]; then 
+    printf "(%s) %s [%d/%d] %s: %s | DEBUG: %s -> %s" "$function_name" "$PRETTY_LOG_ELAPSED" "$counter" "$total" "$name" "${base//%/%%}" "${file_path//%/%%}" "${file_destination//%/%%}"
+  else
+    if (( counter % OUTPUT_REFRESH_RATE == 0 )); then
+      printf "\r\033[K%b%s [%d/%d] %s: %s%b" "$C_BLUE" "$PRETTY_LOG_ELAPSED"  "$counter" "$total" "$name" "${base//%/%%}" "$C_RESET"
+    fi
   fi
 }
 
+# copy functions (the functions that actually do the heavy lifting)
 function copy_files_flat {
   local name="$1"
   local dest="$2"
@@ -111,11 +137,7 @@ function copy_files_flat {
   for f in "${files[@]}"; do
     base=$(basename "$f")
     update_elapsed_time $counter
-    if [[ "$IS_A_TTY" == "$FALSE" ]]; then 
-      printf "(copy_files_flat) %s [%d/%d] %s: %s | DEBUG: %s -> %s" "$PRETTY_LOG_ELAPSED" "$counter" "$total" "$name" "${base//%/%%}" "${f//%/%%}" "${dest//%/%%}"
-    else
-      printf "\r\033[K%b %s [%d/%d] %s: %s%b" "$C_BLUE" "$PRETTY_LOG_ELAPSED"  "$counter" "$total" "$name" "${base//%/%%}" "$C_RESET"
-    fi
+    file_update "copy_files_flat" "$counter" "$total" "$name" "${base}" "${f}" "${dest}"
     if [[ -e "$dest/$base" ]]; then
       if [[ "$IS_A_TTY" == "$FALSE" ]]; then
         printf "(copy_files_flat) %s WARNING duplicate %s skipped: %s" "$PRETTY_LOG_ELAPSED" "$name" "$base"
@@ -176,11 +198,7 @@ function copy_3dshape_dirs {
   for d in "${dirs[@]}"; do
     update_elapsed_time $counter
     name="$(basename "$d")"
-    if [[ "$IS_A_TTY" == "$FALSE" ]]; then 
-      printf "(copy_3dshape_dirs) %s [%d/%d] %s: %s | DEBUG: %s -> %s" "$PRETTY_LOG_ELAPSED" "$counter" "$total" "3D model" "${name//%/%%}" "${f//%/%%}" "${dest//%/%%}"
-    else
-      printf "\r\033[K%b %s [%d/%d] %s: %s%b" "$C_BLUE" "$PRETTY_LOG_ELAPSED" "$counter" "$total" "3D model" "${name//%/%%}" "$C_RESET"
-    fi
+    file_update "copy_3dshape_dirs" "$counter" "$total" "3D model" "${name}" "${f}" "${dest}"
     if [[ -e "$dest/$name" ]]
     then
       if [[ "$IS_A_TTY" == "$FALSE" ]]; then
@@ -211,15 +229,14 @@ function compile_troublemakers() {
     if (( first )); then
       # First element: open parentheses
       # result+=( \( -iname "$excl" -o -ipath "*/$excl/*" )
-      # result+=( \( -iname "$excl" -o -ipath "*/$excl/*" )
-      # result+=( \( -iname "$excl" )
-      result+=( \( -path "$SRC_DIR/$excl" -o -path "$SRC_DIR/$excl/*")
+      result+=( \( -iname "$excl" )
+      # result+=( \( -path "$SRC_DIR/$excl" -o -path "$SRC_DIR/$excl/*")
       first=0
     else
       # subsequent elements: prepend -o
       # result+=( -o -iname "$excl" -o -ipath "*/$excl/*")
-      # result+=( -o -iname "$excl")
-      result+=( -o -path "$SRC_DIR/$excl" -o -path "$SRC_DIR/$excl/*")
+      result+=( -o -iname "$excl")
+      # result+=( -o -path "$SRC_DIR/$excl" -o -path "$SRC_DIR/$excl/*")
     fi
   done
 
