@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../snap_magic"
+		},
+		{
+			"path": "../../ultra_librarian"
+		}
+	],
+	"settings": {}
+}
