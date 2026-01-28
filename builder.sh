@@ -8,6 +8,10 @@ set -uo pipefail
 # Timer tracking - initialise
 #####################################
 RUN_START_TIME=$(date +%s)
+ELAPSED_HOURS=0
+ELAPSED_MINUTES=0
+ELAPSED_SECONDS=0
+PRETTY_LOG_ELAPSED=""
 
 SRC_DIR="src"
 BUILD_DIR="build"
@@ -77,6 +81,18 @@ fi
 # Functions
 #####################################
 
+function update_elapsed_time {
+  local i=${1:-0}
+  if (( i % 1000 == 0 )); then
+    NOW=$(date +%s)
+    ELAPSED=$((NOW - START_TIME))
+    ELAPSED_HOURS=$((ELAPSED_TIME / 3600))
+    ELAPSED_MINUTES=$(((ELAPSED_TIME % 3600) / 60))
+    ELAPSED_SECONDS=$((ELAPSED_TIME % 60))
+    PRETTY_LOG_ELAPSED="[${ELAPSED_HOURS}:${ELAPSED_MINUTES}:${ELAPSED_SECONDS}]"
+  fi
+}
+
 function copy_files_flat {
   local name="$1"
   local dest="$2"
@@ -94,16 +110,17 @@ function copy_files_flat {
 
   for f in "${files[@]}"; do
     base=$(basename "$f")
+    update_elapsed_time $counter
     if [[ "$IS_A_TTY" == "$FALSE" ]]; then 
-      printf "(copy_files_flat) [%d/%d] %s: %s | DEBUG: %s -> %s" "$counter" "$total" "$name" "${base//%/%%}" "${f//%/%%}" "${dest//%/%%}"
+      printf "(copy_files_flat) %s [%d/%d] %s: %s | DEBUG: %s -> %s" "$PRETTY_LOG_ELAPSED" "$counter" "$total" "$name" "${base//%/%%}" "${f//%/%%}" "${dest//%/%%}"
     else
-      printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "$name" "${base//%/%%}" "$C_RESET"
+      printf "\r\033[K%b %s [%d/%d] %s: %s%b" "$C_BLUE" "$PRETTY_LOG_ELAPSED"  "$counter" "$total" "$name" "${base//%/%%}" "$C_RESET"
     fi
     if [[ -e "$dest/$base" ]]; then
       if [[ "$IS_A_TTY" == "$FALSE" ]]; then
-        printf "(copy_files_flat) WARNING duplicate %s skipped: %s" "$name" "$base"
+        printf "(copy_files_flat) %s WARNING duplicate %s skipped: %s" "$PRETTY_LOG_ELAPSED" "$name" "$base"
       else
-        warning="$warning\nWARNING: duplicate $name skipped: $base"
+        warning="$warning\n${PRETTY_LOG_ELAPSED} WARNING: duplicate $name skipped: $base"
       fi
     else
       if [[ "$IS_A_TTY" == "$FALSE" ]]; then
@@ -157,18 +174,19 @@ function copy_3dshape_dirs {
   fi
 
   for d in "${dirs[@]}"; do
+    update_elapsed_time $counter
     name="$(basename "$d")"
     if [[ "$IS_A_TTY" == "$FALSE" ]]; then 
-      printf "(copy_3dshape_dirs) [%d/%d] %s: %s | DEBUG: %s -> %s" "$counter" "$total" "3D model" "${name//%/%%}" "${f//%/%%}" "${dest//%/%%}"
+      printf "(copy_3dshape_dirs) %s [%d/%d] %s: %s | DEBUG: %s -> %s" "$PRETTY_LOG_ELAPSED" "$counter" "$total" "3D model" "${name//%/%%}" "${f//%/%%}" "${dest//%/%%}"
     else
-      printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "3D model" "${name//%/%%}" "$C_RESET"
+      printf "\r\033[K%b %s [%d/%d] %s: %s%b" "$C_BLUE" "$PRETTY_LOG_ELAPSED" "$counter" "$total" "3D model" "${name//%/%%}" "$C_RESET"
     fi
     if [[ -e "$dest/$name" ]]
     then
       if [[ "$IS_A_TTY" == "$FALSE" ]]; then
-        printf "(copy_3dshape_dirs) WARNING duplicate 3D model skipped: %s" "$base"
+        printf "(copy_3dshape_dirs) %s WARNING duplicate 3D model skipped: %s" "$PRETTY_LOG_ELAPSED" "$base"
       else
-        warning="$warning\nWARNING: duplicate 3D model skipped: $base"
+        warning="$warning\n${PRETTY_LOG_ELAPSED} WARNING: duplicate 3D model skipped: $base"
       fi
     else
       if [[ "$IS_A_TTY" == "$FALSE" ]]; then
@@ -188,11 +206,49 @@ function copy_3dshape_dirs {
 
 function compile_troublemakers() {
   local result=()
+  local first=1
   for excl in "$@"; do
-    result+=( -path "*/$excl/*" -prune -o )
+    if (( first )); then
+      # First element: open parentheses
+      # result+=( \( -iname "$excl" -o -ipath "*/$excl/*" )
+      # result+=( \( -iname "$excl" -o -ipath "*/$excl/*" )
+      # result+=( \( -iname "$excl" )
+      result+=( \( -path "$SRC_DIR/$excl" -o -path "$SRC_DIR/$excl/*")
+      first=0
+    else
+      # subsequent elements: prepend -o
+      # result+=( -o -iname "$excl" -o -ipath "*/$excl/*")
+      # result+=( -o -iname "$excl")
+      result+=( -o -path "$SRC_DIR/$excl" -o -path "$SRC_DIR/$excl/*")
+    fi
   done
+
+  # Close parentheses
+  result+=( \) -prune -o )
+
   # Return the array by printing, but capture with array assignment
   printf "%s\n" "${result[@]}"
+}
+
+
+
+function check_that_no_troublemakers_have_slipped_in {
+  local hit
+  local pattern_args=()
+
+  # Dynamically build find arguments from EXCLUDE_PATHS
+  for excl in "${EXCLUDE_PATHS[@]}"; do
+    pattern_args+=( -iname "$excl" -o )
+  done
+  unset 'pattern_args[${#pattern_args[@]}-1]'  # remove trailing -o
+
+  hit=$(find "$BUILD_DIR" -type d \( "${pattern_args[@]}" \) -print -quit)
+
+  if [[ -n "$hit" ]]; then
+    echo -e "${C_RED}ERROR: gated content leaked into public build:${C_RESET}"
+    echo "  $hit"
+    exit 1
+  fi
 }
 
 function handle_troublemakers {
@@ -319,6 +375,11 @@ copy_3dshape_dirs "$MODEL_DIR" "${model_dirs[@]}"
 echo -e "\n${C_GREEN}3D models done.${C_RESET}"
 
 #####################################
+# Checking that no troublemakers slipped in
+#####################################
+check_that_no_troublemakers_have_slipped_in
+
+#####################################
 # Handle "troublemaker" libraries
 #####################################
 
@@ -373,11 +434,6 @@ echo "(c) Written by Henry Letellier, aided by AI"
 #####################################
 # Timer tracking - end + report
 #####################################
-RUN_END_TIME=$(date +%s)
-ELAPSED_TIME=$((RUN_END_TIME - RUN_START_TIME))
-
-ELAPSED_HOURS=$((ELAPSED_TIME / 3600))
-ELAPSED_MINUTES=$(((ELAPSED_TIME % 3600) / 60))
-ELAPSED_SECONDS=$((ELAPSED_TIME % 60))
+update_elapsed_time 0
 
 printf "Execution time: %02dh %02dm %02ds\n" "$ELAPSED_HOURS" "$ELAPSED_MINUTES" "$ELAPSED_SECONDS"
