@@ -4,8 +4,17 @@
 # set -euo pipefail
 set -uo pipefail
 
+#####################################
+# Timer tracking - initialise
+#####################################
+RUN_START_TIME=$(date +%s)
+
 SRC_DIR="src"
 BUILD_DIR="build"
+
+#####################################
+# Output destinations
+#####################################
 
 FP_DIR="$BUILD_DIR/footprints/Misc.pretty"
 SYM_DIR="$BUILD_DIR/symbols"
@@ -14,23 +23,55 @@ MODEL_DIR="$BUILD_DIR/3dmodels"
 MODEL_VAR="MY_3DMODELS"
 
 #####################################
-# Colours
-#####################################
-
-C_BACKGROUND="\033[48;5;16m"
-C_RED="\033[38;5;9m${C_BACKGROUND}"
-C_PINK="\033[38;5;206m${C_BACKGROUND}"
-C_CYAN="\033[38;5;87m${C_BACKGROUND}"
-C_BLUE="\033[38;5;45m${C_BACKGROUND}"
-C_WHITE="\033[38;5;15m${C_BACKGROUND}"
-C_GREEN="\033[38;5;46m${C_BACKGROUND}"
-C_RESET="\033[0m${C_BACKGROUND}"
-C_YELLOW="\033[38;5;226m${C_BACKGROUND}"
-
-#####################################
 # Troublemakers (for IP reasons)
 #####################################
 EXCLUDE_PATHS=("ultra_librarian")
+
+####################################
+# Some booleans
+####################################
+TRUE=0
+FALSE=1
+YES=$TRUE
+NO=$FALSE
+
+#####################################
+# In a Terminal ?
+#####################################
+
+if [[ $- == *i* ]];then
+  echo "We are in a terminal"
+  IS_A_TTY=$TRUE
+else
+  echo "We are not in a terminal"
+  IS_A_TTY=$FALSE
+fi
+
+#####################################
+# Colours
+#####################################
+
+if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+  C_BACKGROUND=""
+  C_RED=""
+  C_PINK=""
+  C_CYAN=""
+  C_BLUE=""
+  C_WHITE=""
+  C_GREEN=""
+  C_RESET=""
+  C_YELLOW=""
+else
+  C_BACKGROUND="\033[48;5;16m"
+  C_RED="\033[38;5;9m${C_BACKGROUND}"
+  C_PINK="\033[38;5;206m${C_BACKGROUND}"
+  C_CYAN="\033[38;5;87m${C_BACKGROUND}"
+  C_BLUE="\033[38;5;45m${C_BACKGROUND}"
+  C_WHITE="\033[38;5;15m${C_BACKGROUND}"
+  C_GREEN="\033[38;5;46m${C_BACKGROUND}"
+  C_RESET="\033[0m${C_BACKGROUND}"
+  C_YELLOW="\033[38;5;226m${C_BACKGROUND}"
+fi
 
 #####################################
 # Functions
@@ -46,13 +87,30 @@ function copy_files_flat {
   local copied=0
   local warning="${C_YELLOW}"
 
+  if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+    local TMP_FILES="${files[@]}"
+    printf "(copy_files_flat) paths: %s\n" "${TMP_FILES}"
+  fi
+
   for f in "${files[@]}"; do
     base=$(basename "$f")
-    printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "$name" "${base//%/%%}" "$C_RESET"
-    if [[ -e "$dest/$base" ]]; then
-      warning="$warning\nWARNING: duplicate $name skipped: $base"
+    if [[ "$IS_A_TTY" == "$FALSE" ]]; then 
+      printf "(copy_files_flat) [%d/%d] %s: %s | DEBUG: %s -> %s" "$counter" "$total" "$name" "${base//%/%%}" "${f//%/%%}" "${dest//%/%%}"
     else
-      cp "$f" "$dest"
+      printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "$name" "${base//%/%%}" "$C_RESET"
+    fi
+    if [[ -e "$dest/$base" ]]; then
+      if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+        printf "(copy_files_flat) WARNING duplicate %s skipped: %s" "$name" "$base"
+      else
+        warning="$warning\nWARNING: duplicate $name skipped: $base"
+      fi
+    else
+      if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+        cp -v "$f" "$dest"
+      else
+        cp "$f" "$dest"
+      fi
       ((copied++))
     fi
     ((counter++))
@@ -72,6 +130,11 @@ function copy_files_merge_symbols {
   # header from first file
   awk 'NR==1,/^\)/' "${files[0]}" > "$dest"
 
+  if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+    local TMP_FILES="${files[@]}"
+    printf "(copy_files_merge_symbols) paths: %s\n" "${TMP_FILES}"
+  fi
+
   for f in "${files[@]}"; do
     awk '/^\(symbol /{in_symbol=1} in_symbol{print}' "$f" >> "$dest"
   done
@@ -88,14 +151,31 @@ function copy_3dshape_dirs {
   local warning="${C_YELLOW}"
   local name=""
 
+  if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+    local TMP_DIRS="${dirs[@]}"
+    printf "(copy_3dshape_dirs) paths: %s\n" "${TMP_DIRS}"
+  fi
+
   for d in "${dirs[@]}"; do
     name="$(basename "$d")"
-    printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "3D model" "${name//%/%%}" "$C_RESET"
+    if [[ "$IS_A_TTY" == "$FALSE" ]]; then 
+      printf "(copy_3dshape_dirs) [%d/%d] %s: %s | DEBUG: %s -> %s" "$counter" "$total" "3D model" "${name//%/%%}" "${f//%/%%}" "${dest//%/%%}"
+    else
+      printf "\r\033[K%b[%d/%d] %s: %s%b" "$C_BLUE" "$counter" "$total" "3D model" "${name//%/%%}" "$C_RESET"
+    fi
     if [[ -e "$dest/$name" ]]
     then
-      warning="$warning\nWARNING: Duplicate 3D model skipped: $name"
+      if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+        printf "(copy_3dshape_dirs) WARNING duplicate 3D model skipped: %s" "$base"
+      else
+        warning="$warning\nWARNING: duplicate 3D model skipped: $base"
+      fi
     else
-      cp -r "$d" "$dest"
+      if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+        cp -rv "$d" "$dest"
+      else
+        cp -r "$d" "$dest"
+      fi
       ((copied++))
     fi
     ((counter++))
@@ -122,6 +202,10 @@ function handle_troublemakers {
   shift 3
   local providers=("$@") # EXCLUDE_PATHS
 
+  if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+    printf "(handle_troublemakers) type: %s, src_dir: %s, out_dir: %s, providers: %s" "${type}" "${src_dir}" "${out_dir}" "${providers}"
+  fi
+
   for provider in "${providers[@]}"; do
     echo -e "${C_YELLOW}Processing $type from provider: $provider${C_RESET}"
 
@@ -138,7 +222,7 @@ function handle_troublemakers {
 
       "symbol")
         # Collect .kicad_sym files under provider
-        mapfile -t files < <(find "$src_dir" -path "*/$provider/*" -name "*.kicad_sym" | sort)
+        mapfile -t files < <(find "$src_dir" -path "*/$provider/*" -type f -name "*.kicad_sym" | sort)
         if (( ${#files[@]} > 0 )); then
           dest="$out_dir/${provider}.kicad_sym"
           copy_files_merge_symbols "$dest" "${files[@]}"
@@ -285,3 +369,15 @@ echo "all 3D models produced by this script."
 echo ""
 echo -e "==============================================${C_RESET}"
 echo "(c) Written by Henry Letellier, aided by AI"
+
+#####################################
+# Timer tracking - end + report
+#####################################
+RUN_END_TIME=$(date +%s)
+ELAPSED_TIME=$((RUN_END_TIME - RUN_START_TIME))
+
+ELAPSED_HOURS=$((ELAPSED_TIME / 3600))
+ELAPSED_MINUTES=$(((ELAPSED_TIME % 3600) / 60))
+ELAPSED_SECONDS=$((ELAPSED_TIME % 60))
+
+printf "Execution time: %02dh %02dm %02ds\n" "$ELAPSED_HOURS" "$ELAPSED_MINUTES" "$ELAPSED_SECONDS"
