@@ -4,6 +4,8 @@
 # set -euo pipefail
 set -uo pipefail
 
+echo "ADVANCED_CHOICE_OVERRIDE = $ADVANCED_CHOICE_OVERRIDE PATTERN_CHOICE_OVERRIDE= $PATTERN_CHOICE_OVERRIDE"
+
 #####################################
 # Timer tracking - initialise
 #####################################
@@ -222,30 +224,118 @@ function copy_3dshape_dirs {
 
 # Functions for handling troublemakers
 
-function compile_troublemakers() {
+function compile_troublemakers {
   local result=()
   local first=1
-  for excl in "$@"; do
-    if (( first )); then
-      # First element: open parentheses
-      # result+=( \( -iname "$excl" -o -ipath "*/$excl/*" )
-      result+=( \( -iname "$excl" )
-      # result+=( \( -path "$SRC_DIR/$excl" -o -path "$SRC_DIR/$excl/*")
-      first=0
-    else
-      # subsequent elements: prepend -o
-      # result+=( -o -iname "$excl" -o -ipath "*/$excl/*")
-      result+=( -o -iname "$excl")
-      # result+=( -o -path "$SRC_DIR/$excl" -o -path "$SRC_DIR/$excl/*")
-    fi
-  done
+  local pattern_choice=${PATTERN_CHOICE_OVERRIDE:-1}
+  local advanced=${ADVANCED_CHOICE_OVERRIDE:-$FALSE}
 
-  # Close parentheses
-  result+=( \) -prune -o )
+  if [[ "$advanced" == "$TRUE" ]]; then
+    for excl in "$@"; do
+      if (( first )); then
+        # subsequent elements: prepend -o
+        if [[ "$pattern_choice" == "1" ]];then
+          result+=( \( -iname "$excl" ) # does not prevent troublemakers from making it through
+        elif [[ "$pattern_choice" == "2" ]]; then
+          result+=( \( -path "$excl" ) # exclude the directory
+        elif [[ "$pattern_choice" == "3" ]]; then
+          result+=( \( -path "*/$excl/*" ) # does not prevent troublemakers from making it through
+        elif [[ "$pattern_choice" == "4" ]]; then
+          result+=( \( -ipath "*/$excl/*" ) # case insensitive
+        elif [[ "$pattern_choice" == "5" ]]; then
+          result+=( \( -ipath "$excl" ) # case insensitive
+        elif [[ "$pattern_choice" == "6" ]]; then
+          result+=( \( -path "$SRC_DIR/$excl" ) # not tested
+        elif [[ "$pattern_choice" == "7" ]]; then
+          result+=( \( -ipath "$SRC_DIR/$excl") # not tested
+        elif [[ "$pattern_choice" == "8" ]]; then
+          result+=( \( -path "$excl" -o -ipath "*/$excl/*" ) # combined
+        elif [[ "$pattern_choice" == "9" ]]; then
+          result+=( \( -iname "$excl" -o -ipath "$excl" ) # combined
+        elif [[ "$pattern_choice" == "10" ]]; then
+          result+=( \( -path "$SRC_DIR/$excl" -o -path "$SRC_DIR/$excl/*" )
+        elif [[ "$pattern_choice" == "11" ]]; then
+          result+=( \( -path "$excl" -o -path "$excl/*" ) # directory and contents
+        elif [[ "$pattern_choice" == "12" ]]; then
+          result+=( \( -ipath "$SRC_DIR/$excl" -o -ipath "$SRC_DIR/$excl/*" )
+        else
+          result+=( \( -ipath "$excl" -o -ipath "$excl/*" ) # case insensitive
+        fi
+        first=0
+      else
+        # subsequent elements: prepend -o
+        if [[ "$pattern_choice" == "1" ]];then
+          result+=( -o -iname "$excl" ) # does not prevent troublemakers from making it through
+        elif [[ "$pattern_choice" == "2" ]]; then
+          result+=( -o -path "$excl" ) # exclude the directory
+        elif [[ "$pattern_choice" == "3" ]]; then
+          result+=( -o -path "*/$excl/*" ) # does not prevent troublemakers from making it through
+        elif [[ "$pattern_choice" == "4" ]]; then
+          result+=( -o -ipath "*/$excl/*" ) # case insensitive
+        elif [[ "$pattern_choice" == "5" ]]; then
+          result+=( -o -ipath "$excl" ) # case insensitive
+        elif [[ "$pattern_choice" == "6" ]]; then
+          result+=( -o -path "$SRC_DIR/$excl" ) # not tested
+        elif [[ "$pattern_choice" == "7" ]]; then
+          result+=( -o -ipath "$SRC_DIR/$excl") # not tested
+        elif [[ "$pattern_choice" == "8" ]]; then
+          result+=( -o -path "$excl" -o -ipath "*/$excl/*" ) # combined
+        elif [[ "$pattern_choice" == "9" ]]; then
+          result+=( -o -iname "$excl" -o -ipath "$excl" ) # combined
+        elif [[ "$pattern_choice" == "10" ]]; then
+          result+=( -o -path "$SRC_DIR/$excl" -o -path "$SRC_DIR/$excl/*" )
+        elif [[ "$pattern_choice" == "11" ]]; then
+          result+=( -o -path "$excl" -o -path "$excl/*" ) # directory and contents
+        elif [[ "$pattern_choice" == "12" ]]; then
+          result+=( -o -ipath "$SRC_DIR/$excl" -o -ipath "$SRC_DIR/$excl/*" )
+        else
+          result+=( -o -ipath "$excl" -o -ipath "$excl/*" ) # case insensitive
+        fi
+      fi
+    done
+
+    # Close parentheses
+    result+=( \) -prune -o )
+  elif [[ "$advanced" == "$FALSE" ]]; then
+    for excl in "$@"; do
+        if [[ "$pattern_choice" == "1" ]];then
+          result+=( -iname "$excl" -prune -o ) # exclude by name
+        elif [[ "$pattern_choice" == "2" ]]; then
+          result+=( -path "$excl" -prune -o ) # exclude the directory
+        elif [[ "$pattern_choice" == "3" ]]; then
+          result+=( -ipath "$excl" -prune -o ) # case insensitive
+        elif [[ "$pattern_choice" == "4" ]]; then
+          result+=( -path "*/$excl/*" -prune -o ) # exclude by path
+        elif [[ "$pattern_choice" == "5" ]]; then
+          result+=( -ipath "*/$excl/*" -prune -o ) # case insensitive
+        elif [[ "$pattern_choice" == "6" ]]; then
+          result+=( -path "$SRC_DIR/$excl" -prune -o ) # not tested
+        elif [[ "$pattern_choice" == "7" ]]; then
+          result+=( -ipath "$SRC_DIR/$excl" -prune -o ) # not tested
+        elif [[ "$pattern_choice" == "8" ]]; then
+          result+=( -iname "$excl" -prune -o -ipath "*/$excl/*" -prune -o ) # combined
+        elif [[ "$pattern_choice" == "9" ]]; then
+          result+=( -iname "$excl" -prune -o -ipath "$excl" -prune -o ) # combined
+        elif [[ "$pattern_choice" == "10" ]]; then
+          result+=( -path "$SRC_DIR/$excl" -prune -o -path "$SRC_DIR/$excl/*" -prune -o) # not tested
+        elif [[ "$pattern_choice" == "11" ]]; then
+          result+=( -path "$excl" -prune -o -path "$excl/*" -prune -o )
+        elif [[ "$pattern_choice" == "12" ]]; then
+          result+=( -ipath "$SRC_DIR/$excl" -prune -o -ipath "$SRC_DIR/$excl/*" -prune -o) # not tested
+        else
+          result+=( -ipath "$excl" -prune -o -ipath "$excl/*" -prune -o )
+        fi
+    done
+  else
+    for excl in "$@"; do
+      result+=( -path "$excl" -prune -o )
+    done
+  fi
 
   # Return the array by printing, but capture with array assignment
   printf "%s\n" "${result[@]}"
 }
+
 
 
 
@@ -339,6 +429,7 @@ echo "DO NOT modify KICAD*_3DMODEL_DIR variables."
 echo ""
 
 mapfile -t PRUNE_DIRS < <(compile_troublemakers "${EXCLUDE_PATHS[@]}")
+echo "PRUNE_DIRS = ${PRUNE_DIRS[@]}"
 
 #######################################
 # Clean + setup
@@ -355,6 +446,7 @@ mkdir -p "$FP_DIR" "$SYM_DIR" "$MODEL_DIR"
 echo ""
 echo -e "${C_CYAN}Collecting footprint files (.kicad_mod)...${C_RESET}"
 mapfile -t footprint_files < <(find "$SRC_DIR" "${PRUNE_DIRS[@]}" -name "*.kicad_mod" | sort)
+echo "footprint_files = ${footprint_files[@]}"
 num_fp=${#footprint_files[@]}
 echo -e "${C_GREEN}Found $num_fp footprints.${C_RESET}"
 
@@ -367,6 +459,7 @@ echo -e "\n${C_GREEN}Footprints done.${C_RESET}"
 echo ""
 echo -e "${C_CYAN}Collecting symbol files (.kicad_sym)...${C_RESET}"
 mapfile -t symbol_files < <(find "$SRC_DIR"  "${PRUNE_DIRS[@]}" -name "*.kicad_sym" | sort)
+echo "symbol_files=${symbol_files[@]}"
 num_sym=${#symbol_files[@]}
 echo -e "${C_GREEN}Found $num_sym symbol files.${C_RESET}"
 
@@ -384,6 +477,7 @@ echo -e "${C_CYAN}Collecting 3D models (.3dshapes)...${C_RESET}"
 mapfile -t model_dirs < <(
   find "$SRC_DIR" "${PRUNE_DIRS[@]}" -type d -name "*.3dshapes" | sort
 )
+echo "model_dirs= ${model_dirs[@]}"
 num_models=${#model_dirs[@]}
 echo -e "${C_GREEN}Found $num_models model files.${C_RESET}"
 
