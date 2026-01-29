@@ -4,8 +4,6 @@
 # set -euo pipefail
 set -uo pipefail
 
-echo "ADVANCED_CHOICE_OVERRIDE = $ADVANCED_CHOICE_OVERRIDE PATTERN_CHOICE_OVERRIDE= $PATTERN_CHOICE_OVERRIDE"
-
 #####################################
 # Timer tracking - initialise
 #####################################
@@ -57,6 +55,14 @@ if [[ -t 1 ]];then
 else
   echo "We are not in a terminal"
   IS_A_TTY=$FALSE
+fi
+
+#####################################
+# Troublemaker patterns check
+#####################################
+
+if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+  printf "Compiling troublemaker patterns for ADVANCED_CHOICE_OVERRIDE=%d PATTERN_CHOICE_OVERRIDE= %d\n" "$ADVANCED_CHOICE_OVERRIDE" "$PATTERN_CHOICE_OVERRIDE"
 fi
 
 #####################################
