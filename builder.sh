@@ -62,7 +62,12 @@ fi
 #####################################
 
 if [[ "$IS_A_TTY" == "$FALSE" ]]; then
-  printf "Compiling troublemaker patterns for ADVANCED_CHOICE_OVERRIDE=%d PATTERN_CHOICE_OVERRIDE= %d\n" "$ADVANCED_CHOICE_OVERRIDE" "$PATTERN_CHOICE_OVERRIDE"
+  if [[ -v ADVANCED_CHOICE_OVERRIDE ]]; then 
+    printf "Compiling troublemaker patterns for ADVANCED_CHOICE_OVERRIDE=%d " "$ADVANCED_CHOICE_OVERRIDE"
+  fi
+  if [[ -v PATTERN_CHOICE_OVERRIDE ]]; then
+    printf "Compiling troublemaker patterns for PATTERN_CHOICE_OVERRIDE= %d\n" "$PATTERN_CHOICE_OVERRIDE"
+  fi
 fi
 
 #####################################
@@ -174,8 +179,8 @@ function copy_files_merge_symbols {
   local total=${#files[@]}
   echo "Merging $total symbol files into $dest"
 
-  # header from first file
-  awk 'NR==1,/^\)/' "${files[0]}" > "$dest"
+  # header from first file: everything up to but not including the first (symbol line
+  awk '/^[[:space:]]*\(symbol/{exit} {print}' "${files[0]}" > "$dest"
 
   if [[ "$IS_A_TTY" == "$FALSE" ]]; then
     local TMP_FILES="${files[@]}"
@@ -183,7 +188,8 @@ function copy_files_merge_symbols {
   fi
 
   for f in "${files[@]}"; do
-    awk '/^\(symbol /{in_symbol=1} in_symbol{print}' "$f" >> "$dest"
+    printf "(copy_files_merge_symbols) merging file: %s into the symbol library\n" "${f}"
+    sed '$d' "$f" | awk '/^[[:space:]]*\(symbol /{in_symbol=1} in_symbol{print}' >> "$dest"
   done
   echo ")" >> "$dest"
 }
@@ -233,7 +239,7 @@ function copy_3dshape_dirs {
 function compile_troublemakers {
   local result=()
   local first=1
-  local pattern_choice=${PATTERN_CHOICE_OVERRIDE:-1}
+  local pattern_choice=${PATTERN_CHOICE_OVERRIDE:-3}
   local advanced=${ADVANCED_CHOICE_OVERRIDE:-$TRUE}
 
   if [[ "$advanced" == "$TRUE" ]]; then
