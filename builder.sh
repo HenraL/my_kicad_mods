@@ -189,42 +189,72 @@ function copy_files_merge_symbols {
 
   for f in "${files[@]}"; do
     printf "(copy_files_merge_symbols) merging file: %s into the symbol library\n" "${f}"
-    # Extract complete symbol blocks with all nested symbols and their closing parens
-    # Skip the opening kicad_symbol_lib line and the final closing paren
-    # Normalize indentation: top-level symbols start with 2 spaces
+    # Extract complete symbol blocks preserving their structure
+    # Track indentation properly to handle nested sub-symbols
     awk '
-      BEGIN { found_symbol = 0; paren_count = 0; in_symbol = 0; base_indent = -1 }
+      BEGIN { in_symbol = 0; symbol_depth = 0 }
+      
       /^[[:space:]]*\(kicad_symbol_lib/ { next }
-      /^[[:space:]]*\(symbol/ && !in_symbol { 
-        in_symbol = 1
-        found_symbol = 1
-        paren_count = 0
-        # Capture the base indentation level of this top-level symbol
-        match($0, /^[[:space:]]*/)
-        base_indent = RLENGTH
+      /^[[:space:]]*\)$/ && symbol_depth == 1 { 
+        # Closing the top-level symbol
+        print "  )"
+        symbol_depth = 0
+        in_symbol = 0
+        next
       }
-      in_symbol {
-        # Calculate current line indentation
+      
+      /^[[:space:]]*\(symbol/ {
         match($0, /^[[:space:]]*/)
         current_indent = RLENGTH
-        # Subtract base_indent and add 2 (standard top-level indent)
-        new_indent = current_indent - base_indent + 2
-        if (new_indent < 0) new_indent = 0
-        # Rebuild line with normalized indentation
+        
+        if (!in_symbol) {
+          # First top-level symbol
+          in_symbol = 1
+          symbol_depth = 1
+          base_indent = current_indent
+          indent_unit = -1
+          content = substr($0, current_indent + 1)
+          print "  " content
+        } else {
+          # Nested sub-symbol - detect indent_unit if needed
+          if (indent_unit < 0 && current_indent > base_indent) {
+            indent_unit = current_indent - base_indent
+            if (indent_unit < 1) indent_unit = 2
+          }
+          if (indent_unit < 0) indent_unit = 2
+          
+          # Calculate nesting level
+          relative_indent = current_indent - base_indent
+          nesting_level = int(relative_indent / indent_unit)
+          new_indent = 2 + (nesting_level * 2)
+          if (new_indent < 2) new_indent = 2
+          
+          content = substr($0, current_indent + 1)
+          printf "%*s%s\n", new_indent, "", content
+        }
+        next
+      }
+      
+      in_symbol {
+        # Process non-symbol lines
+        match($0, /^[[:space:]]*/)
+        current_indent = RLENGTH
+        
+        # Detect indent_unit from first nested line if not set
+        if (indent_unit < 0 && current_indent > base_indent) {
+          indent_unit = current_indent - base_indent
+          if (indent_unit < 1) indent_unit = 2
+        }
+        if (indent_unit < 0) indent_unit = 2
+        
+        # Calculate nesting level
+        relative_indent = current_indent - base_indent
+        nesting_level = int(relative_indent / indent_unit)
+        new_indent = 2 + (nesting_level * 2)
+        if (new_indent < 2) new_indent = 2
+        
         content = substr($0, current_indent + 1)
         printf "%*s%s\n", new_indent, "", content
-        
-        # Count parentheses
-        for (i = 1; i <= length($0); i++) {
-          c = substr($0, i, 1)
-          if (c == "(") paren_count++
-          else if (c == ")") paren_count--
-        }
-        # When we balance out, we finished this symbol
-        if (paren_count == 0) {
-          in_symbol = 0
-          base_indent = -1
-        }
       }
     ' "$f" >> "$dest"
   done
