@@ -190,53 +190,46 @@ function copy_files_merge_symbols {
   for f in "${files[@]}"; do
     printf "(copy_files_merge_symbols) merging file: %s into the symbol library\n" "${f}"
     # Extract complete symbol blocks preserving their structure
-    # Track indentation properly to handle nested sub-symbols
-    awk '
-      BEGIN { in_symbol = 0; symbol_depth = 0 }
+    # Convert tabs to spaces first, then use parenthesis counting
+    # Expand tabs to 8 spaces (standard tab stop)
+    expand -t 8 "$f" | awk '
+      BEGIN { in_top_symbol = 0; paren_depth = 0; base_indent = -1; indent_unit = -1 }
       
       /^[[:space:]]*\(kicad_symbol_lib/ { next }
-      /^[[:space:]]*\)$/ && symbol_depth == 1 { 
-        # Closing the top-level symbol
-        print "  )"
-        symbol_depth = 0
-        in_symbol = 0
-        next
-      }
       
-      /^[[:space:]]*\(symbol/ {
+      # Final closing paren of the library file
+      /^[[:space:]]*\)$/ && in_top_symbol == 0 { next }
+      
+      /^[[:space:]]*\(symbol/ && in_top_symbol == 0 {
+        # Starting a new top-level symbol
+        in_top_symbol = 1
+        paren_depth = 0
         match($0, /^[[:space:]]*/)
-        current_indent = RLENGTH
+        base_indent = RLENGTH
+        indent_unit = -1
         
-        if (!in_symbol) {
-          # First top-level symbol
-          in_symbol = 1
-          symbol_depth = 1
-          base_indent = current_indent
+        # Output with 2-space indent
+        content = substr($0, base_indent + 1)
+        print "  " content
+        
+        # Count parens
+        for (i = 1; i <= length($0); i++) {
+          c = substr($0, i, 1)
+          if (c == "(") paren_depth++
+          else if (c == ")") paren_depth--
+        }
+        
+        # Check if symbol closes on same line (unlikely but possible)
+        if (paren_depth == 0) {
+          in_top_symbol = 0
+          base_indent = -1
           indent_unit = -1
-          content = substr($0, current_indent + 1)
-          print "  " content
-        } else {
-          # Nested sub-symbol - detect indent_unit if needed
-          if (indent_unit < 0 && current_indent > base_indent) {
-            indent_unit = current_indent - base_indent
-            if (indent_unit < 1) indent_unit = 2
-          }
-          if (indent_unit < 0) indent_unit = 2
-          
-          # Calculate nesting level
-          relative_indent = current_indent - base_indent
-          nesting_level = int(relative_indent / indent_unit)
-          new_indent = 2 + (nesting_level * 2)
-          if (new_indent < 2) new_indent = 2
-          
-          content = substr($0, current_indent + 1)
-          printf "%*s%s\n", new_indent, "", content
         }
         next
       }
       
-      in_symbol {
-        # Process non-symbol lines
+      in_top_symbol {
+        # Process lines within a top-level symbol
         match($0, /^[[:space:]]*/)
         current_indent = RLENGTH
         
@@ -253,10 +246,25 @@ function copy_files_merge_symbols {
         new_indent = 2 + (nesting_level * 2)
         if (new_indent < 2) new_indent = 2
         
+        # Output with normalized indentation
         content = substr($0, current_indent + 1)
         printf "%*s%s\n", new_indent, "", content
+        
+        # Count parentheses
+        for (i = 1; i <= length($0); i++) {
+          c = substr($0, i, 1)
+          if (c == "(") paren_depth++
+          else if (c == ")") paren_depth--
+        }
+        
+        # When parentheses balance, we finished this top-level symbol
+        if (paren_depth == 0) {
+          in_top_symbol = 0
+          base_indent = -1
+          indent_unit = -1
+        }
       }
-    ' "$f" >> "$dest"
+    ' >> "$dest"
   done
   echo ")" >> "$dest"
 }
