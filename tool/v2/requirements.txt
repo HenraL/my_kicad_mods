@@ -1,0 +1,4 @@
+# This is the file that lists all the requirements for the program/script to work properly
+
+# Interractive terminal
+-r ./deps/requirements.tty.txt

@@ -1,0 +1,2 @@
+# These are the dependencies used to emulating a terminal that works regardless of the system.
+tty_ov == 1.0.120
