@@ -2,3 +2,6 @@
 
 # Interractive terminal
 -r ./deps/requirements.tty.txt
+
+# Logging library
+-r ./deps/requirements.logging.txt
