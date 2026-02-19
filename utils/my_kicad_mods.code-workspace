@@ -10,5 +10,48 @@
 			"path": "../../ultra_librarian"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"asperheader.enableDebug": false,
+		"asperheader.extensionIgnore": [
+			"*.code-workspace",
+			"python.version",
+			"settings.json",
+			"*.txt"
+		],
+		"asperheader.extensionName": "KiCad combiner",
+		"asperheader.promptToCreateIfMissing": true,
+		"asperheader.useWorkspaceNameWhenAvailable": false,
+		"asperheader.projectCopyright": "(c) Henry Letellier",
+		"asperheader.headerLogo": [
+			".................................",
+			".+-------+..+-------+..+-------+.",
+			".|.LIB.A.|..|.LIB.B.|..|.LIB.C.|.",
+			".+-------+..+-------+..+-------+.",
+			"....|...........|..........|.....",
+			"....+-----------+----------+.....",
+			"................|................",
+			".........+--------------+........",
+			".........|.LIB.Combined.|........",
+			".........+--------------+........",
+			"................................."
+		],
+		"asperheader.projectDescription": "This is a program that allows you to combine all the KiCad libraries into a single instance.\nThis would make importing easier, less files to add to the KiCad import list.",
+		"files.associations": {
+			"*.cnf": "nginx" // This is for linting purposes, the comments in both file types are the same.
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-python.autopep8",
+			"codezombiech.gitignore",
+			"ms-python.isort",
+			"visualstudioexptteam.vscodeintellicode",
+			"giyyapan.pyformat",
+			"christian-kohler.path-intellisense",
+			"ms-python.vscode-pylance",
+			"ms-python.pylint",
+			"ms-python.python",
+			"foxundermoon.shell-format"
+		]
+	}
 }
