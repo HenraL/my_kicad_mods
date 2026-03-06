@@ -5,3 +5,6 @@
 
 # Logging library
 -r ./deps/requirements.logging.txt
+
+# Dependencies that are to act like middlewares
+-r ./deps/requirements.middleware.txt

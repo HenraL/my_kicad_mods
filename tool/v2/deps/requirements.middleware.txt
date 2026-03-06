@@ -1,0 +1,31 @@
+# 
+# +==== BEGIN KiCad combiner =================+
+# LOGO:
+# .................................
+# .+-------+..+-------+..+-------+.
+# .|.LIB.A.|..|.LIB.B.|..|.LIB.C.|.
+# .+-------+..+-------+..+-------+.
+# ....|...........|..........|.....
+# ....+-----------+----------+.....
+# ................|................
+# .........+--------------+........
+# .........|.LIB.Combined.|........
+# .........+--------------+........
+# .................................
+# /STOP
+# PROJECT: KiCad combiner
+# FILE: requirements.middleware.txt
+# CREATION DATE: 02-03-2026
+# LAST Modified: 0:10:50 02-03-2026
+# DESCRIPTION:
+# This is a program that allows you to combine all the KiCad libraries into a single instance.
+# This would make importing easier, less files to add to the KiCad import list.
+# /STOP
+# COPYRIGHT: (c) Henry Letellier
+# PURPOSE: File in charge of containing the dependencies that act as a middleware between the computer and the program (ex: logging all outputs to a file)
+# // AR
+# +==== END KiCad combiner =================+
+# 
+
+# Rotary logger (a python equivalent of the tee command and that can be put between the program and the computer)
+rotary-logger == 1.0.1
