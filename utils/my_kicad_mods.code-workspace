@@ -38,7 +38,14 @@
 		"asperheader.projectDescription": "This is a program that allows you to combine all the KiCad libraries into a single instance.\nThis would make importing easier, less files to add to the KiCad import list.",
 		"files.associations": {
 			"*.cnf": "nginx" // This is for linting purposes, the comments in both file types are the same.
-		}
+		},
+		"python-envs.pythonProjects": [
+			{
+				"path": ".",
+				"envManager": "ms-python.python:venv",
+				"packageManager": "ms-python.python:pip"
+			}
+		]
 	},
 	"extensions": {
 		"recommendations": [
@@ -51,7 +58,7 @@
 			"ms-python.vscode-pylance",
 			"ms-python.pylint",
 			"ms-python.python",
-			"foxundermoon.shell-format"
+			"lumirelle.shell-format-rev"
 		]
 	}
 }
