@@ -2,6 +2,11 @@
 
 This repository is a collection of custom KiCad libraries, footprints, symbols, and 3D models for electronic design automation (EDA) using KiCad. It aggregates various open-source KiCad libraries and provides a build system to compile them into usable formats.
 
+## Disclaimer
+This script and bundle was written for kicad 9, while they work for kicad 10, one single big pretty folder (Misc.pretty) will make kicad crash, it is thus recommended to search for all the .pretty folders and copy them to a folder of your choice, a script for kicad 10 might be written in the future to automate that, but no garante.
+I would recommend you treat this repository as a big archive for symbols that can be used in kicad.
+I would still recommend you run the script (v1) on your system as it will compile the 3D models into a single folder making import easier.
+
 ## Repository Structure
 
 - **`builder.sh`**: A shell script that builds the libraries from the source directories into the `build/` folder.

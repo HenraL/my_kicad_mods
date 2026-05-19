@@ -16,7 +16,7 @@
 # PROJECT: KiCad combiner
 # FILE: __main__.py
 # CREATION DATE: 16-02-2026
-# LAST Modified: 18:18:47 19-02-2026
+# LAST Modified: 0:22:34 02-03-2026
 # DESCRIPTION:
 # This is a program that allows you to combine all the KiCad libraries into a single instance.
 # This would make importing easier, less files to add to the KiCad import list.
@@ -25,12 +25,12 @@
 # PURPOSE: This is the file that python calls when run as a standalone program.
 # // AR
 # +==== END KiCad combiner =================+
-""" 
+"""
 
 import sys
 try:
-    from .main import main
+    from .main import entrypoint
 except ImportError:
-    from main import main
+    from main import entrypoint
 
-sys.exit(main())
+sys.exit(entrypoint())

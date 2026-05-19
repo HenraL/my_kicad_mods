@@ -14,23 +14,26 @@
 # .................................
 # /STOP
 # PROJECT: KiCad combiner
-# FILE: __main__.py
-# CREATION DATE: 16-02-2026
-# LAST Modified: 0:22:50 02-03-2026
+# FILE: __init__.py
+# CREATION DATE: 19-02-2026
+# LAST Modified: 0:8:47 02-03-2026
 # DESCRIPTION:
 # This is a program that allows you to combine all the KiCad libraries into a single instance.
 # This would make importing easier, less files to add to the KiCad import list.
 # /STOP
 # COPYRIGHT: (c) Henry Letellier
-# PURPOSE: This is the file that python calls when run as a standalone program.
+# PURPOSE: This is the file that allows an easy import of the code located in the utils folder.
 # // AR
 # +==== END KiCad combiner =================+
 """
 
-import sys
-try:
-    from .src import entrypoint
-except ImportError:
-    from src import entrypoint
+from .time_tracking import TimeTracking, TIME_CONSTS
+from .colours import Colours
+from . import global_constants as CONST
 
-sys.exit(entrypoint())
+__all__ = [
+    "TimeTracking",
+    "TIME_CONSTS",
+    "Colours",
+    "CONST"
+]
