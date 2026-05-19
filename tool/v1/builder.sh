@@ -1,4 +1,32 @@
 #!/usr/bin/env bash
+# 
+# +==== BEGIN KiCad combiner =================+
+# LOGO:
+# .................................
+# .+-------+..+-------+..+-------+.
+# .|.LIB.A.|..|.LIB.B.|..|.LIB.C.|.
+# .+-------+..+-------+..+-------+.
+# ....|...........|..........|.....
+# ....+-----------+----------+.....
+# ................|................
+# .........+--------------+........
+# .........|.LIB.Combined.|........
+# .........+--------------+........
+# .................................
+# /STOP
+# PROJECT: KiCad combiner
+# FILE: builder.sh
+# CREATION DATE: 19-05-2026
+# LAST Modified: 14:56:12 19-05-2026
+# DESCRIPTION:
+# This is a program that allows you to combine all the KiCad libraries into a single instance.
+# This would make importing easier, less files to add to the KiCad import list.
+# /STOP
+# COPYRIGHT: (c) Henry Letellier
+# PURPOSE: This is the bash script in charge of compiling all the symbols, footprints and 3D models into 3 folders making them easy to import
+# // AR
+# +==== END KiCad combiner =================+
+# 
 # Original script written partially by hand
 # Script writing was aided by AI.
 # set -euo pipefail

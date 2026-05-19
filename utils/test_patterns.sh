@@ -1,4 +1,32 @@
 #!/bin/bash
+# 
+# +==== BEGIN KiCad combiner =================+
+# LOGO:
+# .................................
+# .+-------+..+-------+..+-------+.
+# .|.LIB.A.|..|.LIB.B.|..|.LIB.C.|.
+# .+-------+..+-------+..+-------+.
+# ....|...........|..........|.....
+# ....+-----------+----------+.....
+# ................|................
+# .........+--------------+........
+# .........|.LIB.Combined.|........
+# .........+--------------+........
+# .................................
+# /STOP
+# PROJECT: KiCad combiner
+# FILE: test_patterns.sh
+# CREATION DATE: 19-05-2026
+# LAST Modified: 14:55:10 19-05-2026
+# DESCRIPTION:
+# This is a program that allows you to combine all the KiCad libraries into a single instance.
+# This would make importing easier, less files to add to the KiCad import list.
+# /STOP
+# COPYRIGHT: (c) Henry Letellier
+# PURPOSE: This is a bash script that aims to test the different patterns supported by the builder script (include ultralibrarian symbols, do not, etc)
+# // AR
+# +==== END KiCad combiner =================+
+# 
 export ADVANCED_CHOICE_OVERRIDE=0
 export PATTERN_CHOICE_OVERRIDE=0
 ADVANCED_MAX=2
