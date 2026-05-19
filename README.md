@@ -1,11 +1,42 @@
+<!-- 
+-- +==== BEGIN KiCad combiner =================+
+-- LOGO:
+-- .................................
+-- .+-------+..+-------+..+-------+.
+-- .|.LIB.A.|..|.LIB.B.|..|.LIB.C.|.
+-- .+-------+..+-------+..+-------+.
+-- ....|...........|..........|.....
+-- ....+-----------+----------+.....
+-- ................|................
+-- .........+--------------+........
+-- .........|.LIB.Combined.|........
+-- .........+--------------+........
+-- .................................
+-- /STOP
+-- PROJECT: KiCad combiner
+-- FILE: README.md
+-- CREATION DATE: 19-05-2026
+-- LAST Modified: 15:36:55 19-05-2026
+-- DESCRIPTION:
+-- This is a program that allows you to combine all the KiCad libraries into a single instance.
+-- This would make importing easier, less files to add to the KiCad import list.
+-- /STOP
+-- COPYRIGHT: (c) Henry Letellier
+-- PURPOSE: This is the readme file containing the explanation for the repository, how the scripts work, how to import everything and the updates the repository has seen due to KiCad evolution.
+-- // AR
+-- +==== END KiCad combiner =================+
+-->
 # My KiCad Mods
 
 This repository is a collection of custom KiCad libraries, footprints, symbols, and 3D models for electronic design automation (EDA) using KiCad. It aggregates various open-source KiCad libraries and provides a build system to compile them into usable formats.
 
 ## Disclaimer
+
 This script and bundle was written for kicad 9, while they work for kicad 10, one single big pretty folder (Misc.pretty) will make kicad crash, it is thus recommended to search for all the .pretty folders and copy them to a folder of your choice, a script for kicad 10 might be written in the future to automate that, but no garante.
 I would recommend you treat this repository as a big archive for symbols that can be used in kicad.
 I would still recommend you run the script (v1) on your system as it will compile the 3D models into a single folder making import easier.
+
+The script 1.1 has been updated (and is the default bash script (builder.sh) located at the root of the directory) to generate the original single big library, but also put all the individual libraries in a single folder making it easier to import (you won't need to navigate each child repository for their symbols, 3D files, etc)
 
 ## Repository Structure
 

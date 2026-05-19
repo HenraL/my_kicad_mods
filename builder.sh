@@ -17,7 +17,7 @@
 # PROJECT: KiCad combiner
 # FILE: builder.sh
 # CREATION DATE: 19-05-2026
-# LAST Modified: 14:56:12 19-05-2026
+# LAST Modified: 15:27:16 19-05-2026
 # DESCRIPTION:
 # This is a program that allows you to combine all the KiCad libraries into a single instance.
 # This would make importing easier, less files to add to the KiCad import list.
@@ -49,9 +49,12 @@ BUILD_DIR="build"
 # Output destinations
 #####################################
 
-FP_DIR="$BUILD_DIR/footprints/Misc.pretty"
+FP_DIR="$BUILD_DIR/footprints"
+FP_DIR_COMBINED="$FP_DIR/Misc.pretty"
+FP_DIR_FLAT="$FP_DIR/Individual"
 SYM_DIR="$BUILD_DIR/symbols"
 SYM_OUT="$SYM_DIR/Combined.kicad_sym"
+SYM_DIR_FLAT="$SYM_DIR/Individual"
 MODEL_DIR="$BUILD_DIR/3dmodels"
 MODEL_VAR="MY_3DMODELS"
 
@@ -302,6 +305,45 @@ function copy_files_merge_symbols {
   echo ")" >> "$dest"
 }
 
+function copy_footprints_dirs {
+  local dest="$1"
+  shift
+  local dirs=("$@")
+  local total=${#dirs[@]}
+  local counter=1
+  local copied=0
+  local warning="${C_YELLOW}"
+  local name=""
+
+  if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+    local TMP_DIRS="${dirs[@]}"
+    printf "(copy_3dshape_dirs) paths: %s\n" "${TMP_DIRS}"
+  fi
+
+  for d in "${dirs[@]}"; do
+    update_elapsed_time $counter
+    name="$(basename "$d")"
+    file_update "copy_3dshape_dirs" "$counter" "$total" "3D model" "${name}" "${f}" "${dest}"
+    if [[ -e "$dest/$name" ]]
+    then
+      if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+        printf "(copy_3dshape_dirs) %s WARNING duplicate 3D model skipped: %s" "$PRETTY_LOG_ELAPSED" "$base"
+      else
+        warning="$warning\n${PRETTY_LOG_ELAPSED} WARNING: duplicate 3D model skipped: $base"
+      fi
+    else
+      if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+        cp -rv "$d" "$dest"
+      else
+        cp -r "$d" "$dest"
+      fi
+      ((copied++))
+    fi
+    ((counter++))
+  done
+  echo -e "$warning${C_RESET}"
+  echo -e "${C_GREEN}$copied of $total 3D models copied${C_RESET}"
+}
 function copy_3dshape_dirs {
   local dest="$1"
   shift
@@ -503,10 +545,23 @@ mapfile -t footprint_files < <(find "$SRC_DIR" "${PRUNE_DIRS[@]}" -name "*.kicad
 if [[ "$IS_A_TTY" == "$FALSE" ]]; then
   printf "(Footprints) footprint_files = %s\n" "${footprint_files[@]}"
 fi
+mapfile -t footprint_dirs < <(
+  find "$SRC_DIR" "${PRUNE_DIRS[@]}" -type d -name "*.pretty" | sort
+)
+if [[ "$IS_A_TTY" == "$FALSE" ]]; then
+  printf "(Footprints) footprint_dirs = %s\n" "${footprint_dirs[@]}"
+fi
 num_fp=${#footprint_files[@]}
 echo -e "${C_GREEN}Found $num_fp footprints.${C_RESET}"
+num_fp_dir=${#footprint_dirs[@]}
+echo -e "${C_GREEN}Found $num_fp_dir footprint folders.${C_RESET}"
 
-copy_files_flat "Footprint" "$FP_DIR" "${footprint_files[@]}"
+copy_files_flat "Footprint" "$FP_DIR_COMBINED" "${footprint_files[@]}"
+if (( num_fp_dir > 0 )); then
+  copy_footprints_dir "$FP_DIR_FLAT" "${footprint_dirs[@]}"
+else
+  echo -e "${C_RED}No Footprints directories found.${C_RESET}"
+fi
 echo -e "\n${C_GREEN}Footprints done.${C_RESET}"
 
 #######################################
@@ -523,9 +578,12 @@ echo -e "${C_GREEN}Found $num_sym symbol files.${C_RESET}"
 
 if (( num_sym > 0 )); then
   copy_files_merge_symbols "$SYM_OUT" "${symbol_files[@]}"
+  copy_files_flat "Symbol" "$SYM_DIR_FLAT" "${symbol_files[@]}"
+  echo -e "\n${C_GREEN}Symbols done.${C_RESET}"
 else
   echo -e "${C_RED}No symbols found.${C_RESET}"
 fi
+
 
 #######################################
 # 3D models
