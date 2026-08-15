@@ -28,4 +28,4 @@
 # 
 
 # Rotary logger (a python equivalent of the tee command and that can be put between the program and the computer)
-rotary-logger ==1.0.2
+rotary-logger ==1.0.5
