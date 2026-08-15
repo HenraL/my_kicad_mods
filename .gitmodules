@@ -61,3 +61,6 @@
 [submodule "src/hm10-kicad"]
 	path = src/hm10-kicad
 	url = https://github.com/dylankbuckley/hm10-kicad.git
+[submodule "src/manually_recreated"]
+	path = src/manually_recreated
+	url = git@github.com:HenraL/manually_recreated.git

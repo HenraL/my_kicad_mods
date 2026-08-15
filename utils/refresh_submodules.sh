@@ -28,6 +28,9 @@
 # +==== END KiCad combiner =================+
 # 
 
+# Setting for wether to rebuild the set or not
+REBUILD_SET="true"
+
 # Update all submodules to their latest version
 echo "Updating submodules to their latest versions..."
 git submodule update --remote
@@ -40,5 +43,9 @@ else
 fi
 
 # Call builder.sh
-echo "Running builder.sh..."
-./builder.sh
+if [ "${REBUILD_SET,,}" == "true" ]; then
+    echo "Running builder.sh..."
+    ./builder.sh
+else
+    echo "Rebuilding disabled, not running builder set..."
+fi
