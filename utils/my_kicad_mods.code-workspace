@@ -4,10 +4,16 @@
 			"path": ".."
 		},
 		{
+			"name": "snap_magic (source repo)",
 			"path": "../../snap_magic"
 		},
 		{
+			"name": "ultra_librarian (source repo)",
 			"path": "../../ultra_librarian"
+		},
+		{
+			"name": "manually_recreated (source repo)",
+			"path": "../../manually_recreated"
 		}
 	],
 	"settings": {
@@ -58,7 +64,8 @@
 			"ms-python.vscode-pylance",
 			"ms-python.pylint",
 			"ms-python.python",
-			"lumirelle.shell-format-rev"
+			"lumirelle.shell-format-rev",
+			"henryletellier.asperheader"
 		]
 	}
 }
